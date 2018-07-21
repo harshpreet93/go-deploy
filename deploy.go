@@ -1,0 +1,6 @@
+package deploy
+
+func getBinLocation() {
+
+}
+
