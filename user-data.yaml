@@ -1,0 +1,6 @@
+runcmd:
+  - sudo adduser app --gecos "First Last,RoomNumber,WorkPhone,HomePhone" --disabled-password
+  - echo "app:app" | sudo chpasswd
+
+
+

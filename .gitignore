@@ -13,3 +13,5 @@
 
 # ignore GoLand project structure folder.
 .idea/*
+
+.env
