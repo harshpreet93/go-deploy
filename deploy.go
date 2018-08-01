@@ -4,10 +4,11 @@ import (
 	"context"
 	"fmt"
 	"github.com/digitalocean/godo"
-	"github.com/gobuffalo/packr"
 	"golang.org/x/oauth2"
 	"os"
 	"strconv"
+	"golang.org/x/crypto/ssh"
+	"io/ioutil"
 )
 
 type AppDeploymentConfig struct {
@@ -39,8 +40,18 @@ func createSlugString(standard bool, numVCPU int, memoryGigs int) string {
 	result += (strconv.Itoa(memoryGigs) + "gb")
 	return result
 }
-func getSSHPubKey() {
-
+func getSSHPubKeyMD5Signature() (*ssh.PublicKey, error) {
+	rawKey, err := ioutil.ReadFile("~.ssh/id_rsa.pub")
+	if err != nil {
+		fmt.Errorf("error reading ~.ssh/id_rsa.pub", err)
+		return nil, err
+	}
+	pubKey, err := ssh.ParsePublicKey(rawKey)
+	if err != nil {
+		fmt.Errorf("error parsing valid key", err)
+		return nil, err
+	}
+	return &pubKey, nil
 }
 func spinUpNewDroplet(name string, region string, standard bool, numVCPU int, memoryGigs int, token string) {
 
@@ -51,9 +62,9 @@ func spinUpNewDroplet(name string, region string, standard bool, numVCPU int, me
 	oauthClient := oauth2.NewClient(context.Background(), tokenSource)
 	client := godo.NewClient(oauthClient)
 	slug := createSlugString(standard, numVCPU, memoryGigs)
-	fmt.Println("slug "+slug)
-	userDataBox := packr.NewBox("./user-data.yaml")
-	sshKey := godo.DropletCreateSSHKey{Fingerprint:"51:42:0e:45:50:0c:57:39:8f:bd:86:13:9c:29:3e:84"}
+	pubKey, err := getSSHPubKeyMD5Signature()
+	
+	sshKey := godo.DropletCreateSSHKey{Fingerprint: }
 	createRequest := &godo.DropletCreateRequest{
 		Name:   name,
 		Region: region, //"nyc3",
@@ -61,7 +72,6 @@ func spinUpNewDroplet(name string, region string, standard bool, numVCPU int, me
 		Image: godo.DropletCreateImage{
 			Slug: "ubuntu-18-04-x64",
 		},
-		UserData: userDataBox.String("user-data.yaml"),
 		SSHKeys: []godo.DropletCreateSSHKey{sshKey},
 	}
 
